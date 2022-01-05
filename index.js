@@ -1,7 +1,8 @@
+require('dotenv').config()
 const fs = require('fs');
 const fetch = require('node-fetch')
 const { Client, Collection, Intents } = require('discord.js');
-const token = process.env['token'];
+const token = process.env.token;
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, "GUILD_MESSAGES", "DIRECT_MESSAGES", "GUILD_MEMBERS"] });
 client.commands = new Collection();
 
@@ -24,8 +25,8 @@ for (const file of eventFiles) {
 }
 
 // sub count
-var APIKey = process.env['APIKey'];
-var Userid = process.env['youtubeChannelId'];
+var APIKey = process.env.APIKey;
+var Userid = process.env.youtubeChannelId;
 function setSubs() {
 	var subscriberCount
 	return fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${Userid}&key=${APIKey}`)

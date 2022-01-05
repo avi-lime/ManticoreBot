@@ -8,7 +8,8 @@
     "dotenv": "^10.0.0",
     "node": "^17.3.0",
     "node-fetch": "^2.6.6",
-    "npm": "^8.3.0"
+    "npm": "^8.3.0",
+    "sqlite3": "^5.0.2"
   },
   "name": "manticorebot",
   "version": "1.0.0",

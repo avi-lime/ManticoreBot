@@ -1,10 +1,13 @@
+require('dotenv').config()
 const Discord = require("discord.js");
 const { SlashCommandBuilder, roleMention, codeBlock } = require("@discordjs/builders");
 const { checkPerms } = require('../import_folder/functions');
 const { formatString, rulesString } = require('../import_folder/strings')
-const Database = require('@replit/database');
-const scrimsDB = new Database();
 
+const sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('scrims.db')
+var status = false
+var collector, scrimsChannelID;
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('scrims')
@@ -42,10 +45,11 @@ module.exports = {
                 .addStringOption(option => option.setName('id').setDescription('id for the custom room').setRequired(true))
                 .addStringOption(option => option.setName('pass').setDescription('password for the custom room').setRequired(true))
         )
+        .addSubcommand(subcommand =>
+            subcommand.setName("registration_stop").setDescription("stops the registration for scrims, and posts the slot list"))
     ,
     async execute(interaction) {
         var time = interaction.options.getString('time');
-        var collector;
         var formatEmbed = new Discord.MessageEmbed()
             .setTitle("Registration Format")
             .setDescription(
@@ -72,9 +76,8 @@ module.exports = {
         const announce = async (interaction) => {
             let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604'], channelIdArray: ['859124396560220210'] })
             if (!perms) return;
-            let status = await scrimsDB.get("status")
             if (status) return await interaction.reply({ content: 'Scrims already running.', ephemeral: true }) // annouce the scrims
-            await scrimsDB.set("scrimsChannel", interaction.channel.id);
+            scrimsChannelID = interaction.channel.id
             // start the scrims, 2 minutes later
             var toStartEmbed = new Discord.MessageEmbed()
                 .setTitle(`Registrations for ${time} P.M. T3 scrims.`)
@@ -89,7 +92,8 @@ module.exports = {
                 var now = new Date()
                 var hours = now.getHours()
                 var minutes = now.getMinutes()
-                if (hours == (parseInt(time) + 12 - 6) && minutes == 30) {
+                console.log([hours, minutes])
+                if (hours == (parseInt(time) + 12)) {
                     scrimsStart(interaction)
                     clearTime()
                 }
@@ -106,11 +110,10 @@ module.exports = {
                 .setColor('BLACK');
 
             await interaction.channel.send({ embeds: [startEmbed] })
-            await interaction.channel.permissionOverwrites.edit(process.env['guildId'], {
+            await interaction.channel.permissionOverwrites.edit(interaction.guild.id, {
                 SEND_MESSAGES: true
             })
-            await scrimsDB.set("list", []);
-						await scrimsDB.set("status", true);
+            status = true
             collector = await interaction.channel.createMessageCollector()
             collector.on("collect", async m => {
                 if (m.author.bot) return
@@ -122,17 +125,21 @@ module.exports = {
                         if (user.bot) return interaction.reply(`Don't tag bots in your message`);
                     })
                     var teamName = teamStr.replace(/(team name -)|(team name)|(team)/i, "").trim();
-                    var slots = await scrimsDB.get("list")
-                    if (slots.find(slot => slot.userid === m.author.id)) {
-                        return await m.reply({ content: "Your team has already been registered", ephemeral: true })
-                    }
-                    await slots.push({ "slotNum": slots.length + 1, "team": teamName, "userid": m.author.id })
-                    await scrimsDB.set("list", slots)
-                    await interaction.guild.channels.cache.get('859133820128329779').permissionOverwrites.edit(m.author.id, { VIEW_CHANNEL: true })
-                    if (slots.length === 20) {
-                        await scrimsRegStop(collector, interaction);
-                    }
-                    await m.react('927551818886692944')
+                    db.get('SELECT max(slotNum) AS len FROM slotList', async (err, row) => {
+                        if (err) return console.log(err)
+                        else {
+                            var slotsLen = row.len | 0;
+                            db.run('INSERT INTO slotList VALUES(?, ?, ?)', [slotsLen + 1, teamName, m.author.id], async (err) => {
+                                if (err && err.code == 'SQLITE_CONSTRAINT')
+                                    return await m.reply({ content: `You've already registered!`, ephemeral: true })
+                                await interaction.guild.channels.cache.get('859133820128329779').permissionOverwrites.edit(m.author.id, { VIEW_CHANNEL: true })
+                                await m.react('927551818886692944')
+                                if (slotsLen === 20) {
+                                    await scrimsRegStop(collector, interaction);
+                                }
+                            });
+                        }
+                    })
                 } else {
                     await m.react('927558589126680657')
                     await m.reply({ content: 'Please follow the format.', ephemeral: true });
@@ -146,48 +153,57 @@ module.exports = {
 
             collector.stop();
 
-            let scrimsChannelID = await scrimsDB.get("scrimsChannel")
             let scrimsChannel = interaction.guild.channels.cache.get(scrimsChannelID);
             let slotChannel = interaction.guild.channels.cache.get('859133769986342952')
-            let slots = await scrimsDB.get("list")
-            var slotEmbed = createSlotList(slots)
+            let slots = [];
+            db.each('SELECT * FROM slotList', (err, row) => {
+                if (err) return console.log(err)
+                else {
+                    slots.push({ "slotNum": row.slotNum, "teamName": row.teamName, "userid": row.userid })
+                }
+            }, async (err, count) => {
+                var slotEmbed = createSlotList(slots)
 
-            await scrimsChannel.permissionOverwrites.edit(process.env['guildId'], {
-                SEND_MESSAGES: false
-            });
-            var regStopEmbed = new Discord.MessageEmbed()
-                .setAuthor({ name: `Manticore Scrims`, iconURL: interaction.guild.iconURL({ dynamic: true }) })
-                .setColor("RED")
-                .setDescription(`All slots full, registrations have been closed!\nYou can check your slot number in ${slotChannel.toString()}`)
+                await scrimsChannel.permissionOverwrites.edit(interaction.guild.id, {
+                    SEND_MESSAGES: false
+                });
+                var regStopEmbed = new Discord.MessageEmbed()
+                    .setAuthor({ name: `Manticore Scrims`, iconURL: interaction.guild.iconURL({ dynamic: true }) })
+                    .setColor("RED")
+                    .setDescription(`All slots full, registrations have been closed!\nYou can check your slot number in ${slotChannel.toString()}`)
 
-            await scrimsChannel.send({ embeds: [regStopEmbed] })
-            await slotChannel.send({ embeds: [slotEmbed] })
+                await scrimsChannel.send({ embeds: [regStopEmbed] })
+                await slotChannel.send({ embeds: [slotEmbed] })
+                if (interaction.replied) await interaction.followUp({ content: `stopped`, ephemeral: true })
+                else await interaction.reply({ content: `stopped`, ephemeral: true })
+            })
+
         }
 
         const scrimsStop = async (interaction) => {
-            if (!await scrimsDB.get("status")) return await interaction.reply({ content: "Scrims not started", ephemeral: true })
+            if (!status) return await interaction.reply({ content: "Scrims not started", ephemeral: true })
             let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
             if (!perms) return;
-            await scrimsRegStop(collector, interaction)
-            scrimsDB.get("scrimsChannel").then(async scrimsChannelID => {
-                let scrimsChannel = interaction.guild.channels.cache.get(scrimsChannelID);
-                await scrimsChannel.permissionOverwrites.edit(process.env['guildId'], {
-                    SEND_MESSAGES: false
-                });
-                await interaction.reply({ content: `Scrims stopped.`, ephemeral: true });
-                await scrimsDB.set("status", false);
-                var slotList = await scrimsDB.get("list");
-                slotList.forEach(async slot => {
-                    await interaction.guild.channels.cache.get('859133820128329779').permissionOverwrites.delete(slot.userid, { VIEW_CHANNEL: true })
-                })
-                await scrimsDB.set("list", []);
+            let scrimsChannel = interaction.guild.channels.cache.get(scrimsChannelID);
+            await scrimsChannel.permissionOverwrites.edit(interaction.guild.id, {
+                SEND_MESSAGES: false
+            });
+            await interaction.reply({ content: `Scrims stopped.`, ephemeral: true });
+            status = false
+            db.each('SELECT userid FROM slotList', (err, row) => {
+                if (err) return console.log(err)
+                else {
+                    interaction.guild.channels.cache.get('859133820128329779').permissionOverwrites.delete(row.userid, { VIEW_CHANNEL: true })
+                }
+            }, (err, count) => {
+                db.run("DELETE FROM slotList")
             })
         }
 
         const createSlotList = (slotList) => {
             var slots = ""
             slotList.forEach(slot => {
-                slots += `${slot.slotNum} - ${slot.team}\n`
+                slots += `${slot.slotNum} - ${slot.teamName}\n`
             })
             var slotEmbed = new Discord.MessageEmbed()
                 .setAuthor({ name: `Manticore Scrims`, iconURL: interaction.guild.iconURL({ dynamic: true }) })
@@ -198,16 +214,18 @@ module.exports = {
         }
 
         const scrimsList = async (interaction) => {
-            let status = await scrimsDB.get("status")
             if (!status) return await interaction.reply({ content: "No scrims running", ephemeral: true })
-
-            let slotList = await scrimsDB.get("list")
-
-            if (!slotList.length) return await interaction.reply({ content: "No teams have joined", ephemeral: true })
-
-            var slotEmbed = createSlotList(slotList)
-
-            await interaction.reply({ embeds: [slotEmbed] })
+            var slots = [];
+            db.each('SELECT * FROM slotList', async (err, row) => {
+                if (err) return console.log(err)
+                else {
+                    slots.push({ "slotNum": row.slotNum, "teamName": row.teamName, "userid": row.userid })
+                }
+            }, async (err, count) => {
+                if (!count) return await interaction.reply({ content: "No teams have joined", ephemeral: true })
+                var slotEmbed = createSlotList(slots)
+                await interaction.reply({ embeds: [slotEmbed] })
+            })
         }
 
         const scrimsIdp = async (interaction) => {
@@ -233,6 +251,9 @@ module.exports = {
                 break;
             case "start":
                 await announce(interaction);
+                break;
+            case "registration_stop":
+                await scrimsRegStop(collector, interaction);
                 break;
             case "stop":
                 await scrimsStop(interaction);
