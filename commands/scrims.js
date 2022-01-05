@@ -93,7 +93,7 @@ module.exports = {
                 var hours = now.getHours()
                 var minutes = now.getMinutes()
                 console.log([hours, minutes])
-                if (hours == (parseInt(time) + 12)) {
+                if (hours == (parseInt(time) + 12) && minutes == 9) {
                     scrimsStart(interaction)
                     clearTime()
                 }
@@ -120,11 +120,16 @@ module.exports = {
                 let teamStr = m.content.split('\n')[0];
 
                 if ((m.mentions.members.size >= 4 && m.mentions.members.size <= 5)) {
-                    if (!(teamStr.match(/(team name -)|(team name)|(team)/i))) return;
-                    m.mentions.members.each(user => {
-                        if (user.bot) return interaction.reply(`Don't tag bots in your message`);
+                    var teamName = teamStr.replace(/(team +?name +?-)|(team +?name)|(team)|(name)/i, "").trim();
+                    if (teamName.match(/^(| )+$/)) return await m.reply('Provide a team name.')
+                    var teamCheck = m.mentions.users.forEach(async user => {
+                        if (user.bot) {
+                            await m.reply(`Don't tag bots.`);
+                            return false;
+                        }
+                        return true;
                     })
-                    var teamName = teamStr.replace(/(team name -)|(team name)|(team)/i, "").trim();
+                    if (!teamCheck) return;
                     db.get('SELECT max(slotNum) AS len FROM slotList', async (err, row) => {
                         if (err) return console.log(err)
                         else {
