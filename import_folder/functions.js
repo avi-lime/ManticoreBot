@@ -1,16 +1,16 @@
 async function checkPerms(interaction, { roleIdArray, channelIdArray }) {
     var roles = roleIdArray;
     var channels = channelIdArray;
-    
-		if (!interaction.member.roles.cache.some(r => roles.includes(r.id))) {
-				await interaction.reply({ content: `Sorry you don't have permissions to use this command.`, ephemeral: true });
-				return false;
-		}
     if (channels) {
         if (!channels.includes(interaction.channel.id)) {
             await interaction.reply({ content: `You can't use this command here!`, ephemeral: true });
             return false;
         }
+    } else if (interaction.member.roles.cache.some(r => roles.includes(r.id))) {
+        return true;
+    } else {
+        await interaction.reply({ content: `Sorry you don't have permissions to use this command.`, ephemeral: true });
+        return false;
     }
     return true
 }
