@@ -1,4 +1,3 @@
-const keepAlive = require('./server')
 const fs = require('fs');
 const fetch = require('node-fetch')
 const { Client, Collection, Intents } = require('discord.js');
@@ -43,7 +42,7 @@ function setSubs() {
 // member count
 function setMember() {
 	var count = client.guilds.cache.get(process.env.guildId).memberCount
-	var goal = Math.ceil(count / 100) == (count/100) ? ((count/100)+1)* 100 : Math.ceil(count/100)*100
+	var goal = Math.ceil(count / 100) == (count / 100) ? ((count / 100) + 1) * 100 : Math.ceil(count / 100) * 100
 	client.channels.cache.get('926494629988286464').setName(`ME ARMY: ${count}`)
 	client.channels.cache.get('927245164244783145').setName(`NEXT GOAL: ${goal}`)
 }
@@ -57,5 +56,4 @@ setInterval(async () => {
 }, 10 * 60 * 1000)
 
 
-keepAlive()
 client.login(token);
