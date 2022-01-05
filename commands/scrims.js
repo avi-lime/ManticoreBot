@@ -87,12 +87,11 @@ module.exports = {
 
             await interaction.channel.send({ content: roleMention('893213632949796875'), embeds: [toStartEmbed, formatEmbed] });
             await interaction.reply({ content: "Please make sure to use `/scrims stop` when the custom game ends.", ephemeral: true });
-            const timeInterval = setInterval(function () { countdown() }, 1000)
+            const timeInterval = setInterval(function () { countdown() }, 5 * 1000)
             function countdown() {
                 var now = new Date()
                 var hours = now.getHours()
                 var minutes = now.getMinutes()
-                console.log([hours, minutes])
                 if (hours == (parseInt(time) + 12 - 6) && minutes == 30) {
                     scrimsStart(interaction)
                     clearTime()
