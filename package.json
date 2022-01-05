@@ -6,7 +6,9 @@
     "discord-api-types": "^0.26.1",
     "discord.js": "^13.5.0",
     "dotenv": "^10.0.0",
-    "node-fetch": "^2.6.6"
+    "node": "^17.3.0",
+    "node-fetch": "^2.6.6",
+    "npm": "^8.3.0"
   },
   "name": "manticorebot",
   "version": "1.0.0",
