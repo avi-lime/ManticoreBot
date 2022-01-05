@@ -6,6 +6,7 @@ const token = process.env.token;
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, "GUILD_MESSAGES", "DIRECT_MESSAGES", "GUILD_MEMBERS"] });
 client.commands = new Collection();
 
+
 // importing 
 const commandFiles = fs.readdirSync("./commands").filter(files => files.endsWith(".js"));
 for (const file of commandFiles) {
