@@ -93,7 +93,7 @@ module.exports = {
                 var hours = now.getHours()
                 var minutes = now.getMinutes()
                 console.log([hours, minutes])
-                if (hours == (parseInt(time) + 12) && minutes == 9) {
+                if (hours == (parseInt(time) + 12 - 6) && minutes == 30) {
                     scrimsStart(interaction)
                     clearTime()
                 }
