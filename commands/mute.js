@@ -10,8 +10,8 @@ module.exports = {
         .addStringOption(option => option.setName('reason').setDescription('reason for mute')),
 
     async execute(interaction) {
-			var perms = await checkPerms(interaction, {roleIdArray: ['552048116552040449']})
-			if(!perms) return
+        var perms = await checkPerms(interaction, { roleIdArray: ['552048116552040449'] })
+        if (!perms) return
         const user = interaction.options.getUser('target');
         const timeString = interaction.options.getString('time') || "10m"; // default time is 10m
         const reason = interaction.options.getString('reason') || "";
@@ -20,7 +20,7 @@ module.exports = {
             return await interaction.reply({ content: "Time format should be in '1d2h3m4s' format", ephemeral: true })
 
         var member = interaction.guild.members.cache.get(user.id);
-				if(!member) return await interaction.reply({ content: "Mention a proper member", ephemeral: true })
+        if (!member) return await interaction.reply({ content: "Mention a proper member", ephemeral: true })
         var { endTime, timestr } = parseTime(timeString)
         if (endTime < 60000)
             return await interaction.reply({ content: 'Time must be more than 60 seconds', ephemeral: true })
@@ -29,16 +29,16 @@ module.exports = {
             .addField('Time', timestr)
             .setColor(member.displayHexColor)
 
-				
-        	if (!reason) {
-            	member.timeout(endTime)
-        	} else {
-            	member.timeout(endTime, reason).then(
-                	muteEmbed.addField('Reason', reason)
-            	)
-        	}
-					await interaction.reply({ embeds: [muteEmbed] })
-				
-        
+
+        if (!reason) {
+            member.timeout(endTime)
+        } else {
+            member.timeout(endTime, reason).then(
+                muteEmbed.addField('Reason', reason)
+            )
+        }
+        await interaction.reply({ embeds: [muteEmbed] })
+
+
     },
 };

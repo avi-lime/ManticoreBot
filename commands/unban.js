@@ -7,8 +7,8 @@ module.exports = {
         .addStringOption(option => option.setName('user_id').setDescription('id of user to unban').setRequired(true))
     ,
     async execute(interaction) {
-			var perms = await checkPerms(interaction, {roleIdArray: ['552048116552040449']})
-			if(!perms) return
+        var perms = await checkPerms(interaction, { roleIdArray: ['552048116552040449'] })
+        if (!perms) return
         const user = interaction.options.getString('user_id')
 
         var unbanEmbed = new Discord.MessageEmbed()

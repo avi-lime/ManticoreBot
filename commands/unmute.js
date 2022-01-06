@@ -7,8 +7,8 @@ module.exports = {
         .setDescription('unmute a user')
         .addUserOption(option => option.setName('target').setDescription('user to unmute').setRequired(true)),
     async execute(interaction) {
-			var perms = await checkPerms(interaction, {roleIdArray: ['552048116552040449']})
-			if(!perms) return
+        var perms = await checkPerms(interaction, { roleIdArray: ['552048116552040449'] })
+        if (!perms) return
         const user = interaction.options.getUser('target')
         var member = interaction.guild.members.cache.get(user.id)
         var unmuteEmbed = new Discord.MessageEmbed()

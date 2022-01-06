@@ -9,12 +9,12 @@ module.exports = {
         .addStringOption(option => option.setName('reason').setDescription('reason to kick'))
     ,
     async execute(interaction) {
-			var perms = await checkPerms(interaction, {roleIdArray: ['552048116552040449']})
-			if(!perms) return
+        var perms = await checkPerms(interaction, { roleIdArray: ['552048116552040449'] })
+        if (!perms) return
         const user = interaction.options.getUser('target')
         const member = interaction.guild.members.cache.get(user.id)
         const reason = interaction.options.getString('reason')
-				if(!member) return await interaction.reply({ content: "Mention a proper member", ephemeral: true })
+        if (!member) return await interaction.reply({ content: "Mention a proper member", ephemeral: true })
         var kickEmbed = new Discord.MessageEmbed()
             .setTitle(`Kicked **${user.tag}**`)
             .setColor('ORANGE')
