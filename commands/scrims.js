@@ -245,37 +245,37 @@ module.exports = {
 
         switch (interaction.options.getSubcommand()) {
             case "format":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
+                var perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
                 if (!perms) return;
                 await scrimsFormat(interaction);
                 break;
             case "start":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
                 if (!perms) return;
                 await announce(interaction);
                 break;
             case "registration_stop":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
                 if (!perms) return;
                 await scrimsRegStop(collector, interaction);
                 break;
             case "stop":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859124396560220210'] })
                 if (!perms) return;
                 await scrimsStop(interaction);
                 break;
             case "rules":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
                 if (!perms) return;
                 await scrimsRules(interaction);
                 break;
             case "list":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'] })
                 if (!perms) return;
                 await scrimsList(interaction);
                 break;
             case "idp":
-                let perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859133820128329779'] })
+                perms = await checkPerms(interaction, { roleIdArray: ['860174816627523604', '927918856402534471'], channelIdArray: ['859133820128329779'] })
                 if (!perms) return;
                 await scrimsIdp(interaction);
                 break;
